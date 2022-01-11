@@ -1,40 +1,67 @@
-const { response, request } = require("express");
+const { response, request } = require('express');
+const bcryptjs = require('bcryptjs');
+const Usuario = require('../models/usuario');
 
-const getUsuarios = (req = request, res = response) => {
-  const { nombre, apikey } = req.query;
-  res.json({
-    msg: "GET Api - Controller",
-    nombre,
-    apikey,
-  });
+const getUsuarios = async (req = request, res = response) => {
+
+  const { limite = 5, desde = 0 } = req.query;
+  const query = { estado: true };
+
+  const [total, usuarios] = await Promise.all([
+    Usuario.countDocuments(query),
+    Usuario.find(query)
+      .skip(desde)
+      .limit(limite)
+  ]);
+
+  res.json({ total, usuarios });
 };
 
-const postUsuarios = (req, res = response) => {
-  const { nombre, edad } = req.body;
-  res.json({
-    msg: "POST Api - Controller",
+const postUsuarios = async (req, res = response) => {
+  const { nombre, correo, password, rol } = req.body;
+  const usuario = new Usuario({
     nombre,
-    edad,
+    correo,
+    password,
+    rol,
   });
+
+  // Encriptar la contraseña
+  const salt = bcryptjs.genSaltSync();
+  usuario.password = bcryptjs.hashSync(password, salt);
+
+  // Guardar en BD
+  await usuario.save();
+
+  res.json(usuario);
 };
 
-const putUsuarios = (req, res = response) => {
+const putUsuarios = async (req, res = response) => {
   const { id } = req.params;
-  res.json({
-    msg: "PUT Api - Controller",
-    id,
-  });
+  const { _id, password, google, correo, ...resto } = req.body;
+
+  if (password) {
+    // Encriptar la contraseña
+    const salt = bcryptjs.genSaltSync();
+    resto.password = bcryptjs.hashSync(password, salt);
+  }
+
+  const usuario = await Usuario.findByIdAndUpdate(id, resto);
+
+  res.json(usuario);
 };
 
-const deleteUsuarios = (req, res = response) => {
-  res.json({
-    msg: "DELETE Api - Controller",
-  });
+const deleteUsuarios = async (req, res = response) => {
+  const { id } = req.params;
+
+  const usuario = await Usuario.findByIdAndUpdate(id, {estado: false});
+
+  res.json(usuario);
 };
 
 const patchUsuarios = (req, res = response) => {
   res.json({
-    msg: "PATCH Api - Controller",
+    msg: 'PATCH Api - Controller',
   });
 };
 
