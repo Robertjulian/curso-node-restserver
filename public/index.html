@@ -32,6 +32,10 @@
 
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
+      let uri = window.location.hostname.includes('localhost') 
+      ? 'http://localhost:8080/api/auth/google' 
+      : 'https://rest-server-node-v1.herokuapp.com/api/auth/google'
+
       function handleCredentialResponse (response) {
         // Google token
         // console.log('id_token:',response.credential)
@@ -39,7 +43,7 @@
           id_token: response.credential
         }
 
-        fetch('http://localhost:8080/api/auth/google', {
+        fetch(uri, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -49,8 +53,8 @@
           .then(resp => resp.json())
           .then(resp => {
             console.log(resp)
-            localStorage.setItem('correo', resp.usuario.correo);
-            location.reload();
+            localStorage.setItem('correo', resp.usuario.correo)
+            location.reload()
           })
           .catch(console.warn)
       }
@@ -61,10 +65,9 @@
         google.accounts.id.disableAutoSelect()
 
         google.accounts.id.revoke(localStorage.getItem('correo'), done => {
-          localStorage.clear();
-          location.reload();
-        });
-
+          localStorage.clear()
+          location.reload()
+        })
       }
     </script>
   </body>
